@@ -5,9 +5,9 @@
 [Rr]elease/
 x64/
 x86/
-build/
+# build/
 bld/
-[Bb]uild/
+# [Bb]uild/
 [Bb]uildScripts/
 
 # ==================== Visual Studio ====================
