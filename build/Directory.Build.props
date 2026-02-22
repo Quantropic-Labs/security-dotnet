@@ -1,0 +1,25 @@
+<Project>
+  <PropertyGroup>
+    <!-- Версия -->
+    <VersionPrefix>0.0.1</VersionPrefix>
+    <VersionSuffix>dev</VersionSuffix>
+    
+    <!-- Информация -->
+    <Authors>Quantropic-Labs</Authors>
+    <Company>Quantropic-Labs</Company>
+    <Description>Security libraries for .NET</Description>
+    <Copyright>Copyright © Quantropic-Labs 2024</Copyright>
+    
+    <!-- Лицензия и репо -->
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/Quantropic-Labs/security-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    
+    <!-- Build settings -->
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>
