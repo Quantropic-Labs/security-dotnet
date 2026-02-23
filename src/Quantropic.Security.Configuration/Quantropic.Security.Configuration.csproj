@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Quantropic.Security.Exceptions\Quantropic.Security.Exceptions.csproj" />
+  </ItemGroup>
+
 </Project>
