@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Quantropic.Security.Abstractions\Quantropic.Security.Abstractions.csproj" />
+    <ProjectReference Include="..\Quantropic.Security.Cryptography\Quantropic.Security.Cryptography.csproj" />
+  </ItemGroup>
+
 </Project>
