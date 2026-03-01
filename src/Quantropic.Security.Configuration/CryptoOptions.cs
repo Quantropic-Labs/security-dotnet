@@ -17,7 +17,7 @@ namespace Quantropic.Security.Configuration
             get => _nonceSiz;
             set
             {
-                if (_nonceSiz != SecurityConstants.AesGcmNonceSize)
+                if (value != SecurityConstants.AesGcmNonceSize)
                     throw new ArgumentOutOfRangeException(nameof(value), $"AES-GCM requires {SecurityConstants.AesGcmNonceSize}-byte nonce for standard compliance.");
 
                 _nonceSiz = value;
@@ -69,9 +69,9 @@ namespace Quantropic.Security.Configuration
 
          // === Presets ===
 
-         public static CryptoOptions Default { get; } = new();
+         public static CryptoOptions Default => new();
 
-         public static CryptoOptions HightSecurity { get; } = new()
+         public static CryptoOptions HightSecurity => new()
          {
             Pbkdf2Iterations = SecurityConstants.Pbkdf2IterationsRecommended  
          };
