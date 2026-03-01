@@ -40,4 +40,4 @@ jobs:
         with:
           files: "**/test-results.trx"
           fail_on: test failures
-          comment_mode: update 
+          comment_mode: changes 
