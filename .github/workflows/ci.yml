@@ -9,6 +9,11 @@ on:
     branches:
       - develop
 
+# Права необходимы для публикации комментариев и статусов проверок
+permissions:
+  checks: write
+  pull-requests: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,8 +30,15 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-      
       - name: Test
-        run: dotnet test --no-build --configuration Release --verbosity normal
+        id: test
+        run: dotnet test --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
+        continue-on-error: true
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: "**/test-results.trx"
+          fail_on: test failures
+          comment_mode: update 
