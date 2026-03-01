@@ -33,7 +33,7 @@ namespace Quantropic.Security.Srp.Server
                 login,
                 Convert.ToBase64String(bBytes),
                 Convert.ToBase64String(verifierBytes),
-                Convert.ToBase64String(B.ToByteArray(isUnsigned: true, isBigEndian: true))
+                Convert.ToBase64String(SrpEncoding.ToModulusBytes(B))
             );
 
             return session;
