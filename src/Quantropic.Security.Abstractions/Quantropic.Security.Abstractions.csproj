@@ -6,7 +6,7 @@
     <Description>Core abstractions, interfaces, and base types for Quantropic.Security library. Provides foundational contracts for security implementations including authentication, cryptography, and SRP protocols.</Description>
     <PackageTags>security;abstractions;interfaces;authentication;cryptography;srp;core;contracts</PackageTags>
     
-    <RootNamespace>Quantropic.Security</RootNamespace>
+    <RootNamespace>Quantropic.Security.Abstractions</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

@@ -6,7 +6,7 @@
     <Description>Custom exception types for Quantropic.Security library. Provides specialized exceptions for authentication failures, cryptographic errors, SRP protocol violations, and security-related error handling.</Description>
     <PackageTags>security;exceptions;error-handling;authentication-errors;crypto-errors;srp-exceptions</PackageTags>
     
-    <RootNamespace>Quantropic.Security</RootNamespace>
+    <RootNamespace>Quantropic.Security.Exceptions</RootNamespace>
   </PropertyGroup>
 
 </Project>

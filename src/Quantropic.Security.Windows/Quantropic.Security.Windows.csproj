@@ -7,7 +7,7 @@
     <Description>Windows-specific security features for Quantropic.Security. Provides integration with Windows Credential Manager, DPAPI (Data Protection API), Windows Hello, and other platform-specific security mechanisms.</Description>
     <PackageTags>security;windows;dpapi;credential-manager;windows-hello;platform-specific;windows-authentication;native</PackageTags>
     
-    <RootNamespace>Quantropic.Security</RootNamespace>
+    <RootNamespace>Quantropic.Security.Windows</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
