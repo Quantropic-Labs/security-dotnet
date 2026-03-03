@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+<PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Quantropic.Security</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <PackageProjectUrl>https://github.com/Quantropic-Labs/security-dotnet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Quantropic-Labs/security-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  
+    <PackageId>Quantropic.Security</PackageId>
+    <Version>0.1.0-beta.1</Version>
+    <Authors>Igor Boytsov</Authors>
+    <Description>Security library with cross-platform SRP implementation</Description>
+    <PackageTags>security;srp;cryptography;authentication</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Quantropic.Security.Abstractions\Quantropic.Security.Abstractions.csproj"/>
+    <ProjectReference Include="..\Quantropic.Security.Configuration\Quantropic.Security.Configuration.csproj"/>
+    <ProjectReference Include="..\Quantropic.Security.Cryptography\Quantropic.Security.Cryptography.csproj"/>
+    <ProjectReference Include="..\Quantropic.Security.Exceptions\Quantropic.Security.Exceptions.csproj"/>
+    <ProjectReference Include="..\Quantropic.Security.Srp.Client\Quantropic.Security.Srp.Client.csproj"/>
+    <ProjectReference Include="..\Quantropic.Security.Srp.Server\Quantropic.Security.Srp.Server.csproj"/>
+    <ProjectReference Include="..\Quantropic.Security.Utilities\Quantropic.Security.Utilities.csproj"/>
+    <ProjectReference Include="..\Quantropic.Security.Windows\Quantropic.Security.Windows.csproj" Condition="'$(TargetFramework)' == 'net10.0-windows'"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
