@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>Quantropic.Security</PackageId>
-    <Version>0.1.0-beta.1</Version>
+    <Version>0.1.0-beta.2</Version>
     <Description>Meta-package for Quantropic.Security libraries. Installs all security components with a single reference.</Description>
     <PackageTags>security;srp;cryptography;authentication;meta-package</PackageTags>
     
