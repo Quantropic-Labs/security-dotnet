@@ -13,6 +13,15 @@ namespace Quantropic.Security.Windows
     /// </summary>
     public class DeviceIdentityService : IDeviceIdentityService
     {
+         /// <summary>
+        /// Initializes a new instance of the <see cref="DeviceIdentityService"/> class.
+        /// </summary>
+        /// <param name="folderName">The name of the subfolder within %LocalAppData% where device identity data will be stored.</param>
+        /// <remarks>
+        /// The constructor builds the full storage path by combining 
+        /// <see cref="Environment.SpecialFolder.LocalApplicationData"/> with the provided <paramref name="folderName"/>,
+        /// and sets the identity file path to <c>device.dat</c> within that folder.
+        /// </remarks>
         public DeviceIdentityService(string folderName)
         {
             _folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), folderName);

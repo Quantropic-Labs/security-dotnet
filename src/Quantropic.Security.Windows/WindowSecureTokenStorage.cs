@@ -14,6 +14,15 @@ namespace Quantropic.Security.Windows
     [SupportedOSPlatform("windows")]
     public class WindowSecureTokenStorage : ISecureTokenStorage
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WindowSecureTokenStorage"/> class.
+        /// </summary>
+        /// <param name="folderName">The name of the subfolder within %LocalAppData% where token data will be stored.</param>
+        /// <remarks>
+        /// The constructor builds the full storage path by combining 
+        /// <see cref="Environment.SpecialFolder.LocalApplicationData"/> with the provided <paramref name="folderName"/>,
+        /// and sets the token file path to <c>token.data</c> within that folder.
+        /// </remarks>
         public WindowSecureTokenStorage(string folderName)
         {
             _folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), folderName);
