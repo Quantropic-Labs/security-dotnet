@@ -19,7 +19,7 @@ namespace Quantropic.Security.Cryptography
         /// </summary>
         public string EncryptedData<T>(T data, byte[] key) => EncryptedData(data, key, CryptoOptions.Default);
         
-        // <summary>
+        /// <summary>
         /// Encrypts data with custom PBKDF2 iterations (quick customization).
         /// </summary>
         public string EncryptedData<T>(T data, byte[] key, int? pbkdf2Iterations = null)

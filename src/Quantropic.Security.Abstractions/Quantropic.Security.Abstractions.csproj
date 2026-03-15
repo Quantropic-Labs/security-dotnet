@@ -1,9 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <PackageId>Quantropic.Security.Abstractions</PackageId>
+    <Version>0.1.0-beta.2</Version>
+    <Description>Core abstractions, interfaces, and base types for Quantropic.Security library. Provides foundational contracts for security implementations including authentication, cryptography, and SRP protocols.</Description>
+    <PackageTags>security;abstractions;interfaces;authentication;cryptography;srp;core;contracts</PackageTags>
+    
+    <RootNamespace>Quantropic.Security.Abstractions</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
