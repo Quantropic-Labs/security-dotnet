@@ -32,7 +32,7 @@ namespace Quantropic.Security.Tests.Srp.Integration
         {
             // === PHASE 1: Registration ===
             // Client: Derive auth hash and generate verifier
-            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestPassword, _salt);
+            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestLogin, TestPassword, _salt);
             var verifierBase64 = _client.GenerateSrpVerifier(authHash);
             var verifierBytes = Convert.FromBase64String(verifierBase64);
             
@@ -47,7 +47,7 @@ namespace Quantropic.Security.Tests.Srp.Integration
 
             // === PHASE 3: Client Proof Generation ===
             // Client: Generate A, M1, S
-            var (A, M1, S) = _client.GenerateSrpProof(TestPassword, saltBase64, B_base64);
+            var (A, M1, S) = _client.GenerateSrpProof(TestLogin, TestPassword, saltBase64, B_base64);
 
             // === PHASE 4: Server Verification ===
             // Server: Verify M1 and generate M2
@@ -69,7 +69,7 @@ namespace Quantropic.Security.Tests.Srp.Integration
         public void FullSrpFlow_WrongPassword_AuthenticationFails()
         {
             // === Registration with correct password ===
-            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestPassword, _salt);
+            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestLogin, TestPassword, _salt);
             var verifierBase64 = _client.GenerateSrpVerifier(authHash);
             var storedVerifier = Convert.FromBase64String(verifierBase64);
 
@@ -81,7 +81,7 @@ namespace Quantropic.Security.Tests.Srp.Integration
             var wrongPassword = "WrongP@ssw0rd!";
             var exception = Record.Exception(() =>
             {
-                var (A, M1, _) = _client.GenerateSrpProof(wrongPassword, saltBase64, challenge.PublicKeyB);
+                var (A, M1, _) = _client.GenerateSrpProof(TestLogin, wrongPassword, saltBase64, challenge.PublicKeyB);
                 _server.VerifySrpProof(challenge, A, M1); // Should throw
             });
 
@@ -94,7 +94,7 @@ namespace Quantropic.Security.Tests.Srp.Integration
         public void FullSrpFlow_TamperedChallenge_AuthenticationFails()
         {
             // === Registration ===
-            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestPassword, _salt);
+            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestLogin, TestPassword, _salt);
             var verifierBase64 = _client.GenerateSrpVerifier(authHash);
             var storedVerifier = Convert.FromBase64String(verifierBase64);
 
@@ -108,7 +108,7 @@ namespace Quantropic.Security.Tests.Srp.Integration
             var tamperedB = Convert.ToBase64String(B_bytes);
 
             // === Client generates proof with tampered B ===
-            var (A, M1, _) = _client.GenerateSrpProof(TestPassword, saltBase64, tamperedB);
+            var (A, M1, _) = _client.GenerateSrpProof(TestLogin, TestPassword, saltBase64, tamperedB);
 
             // === Server tries to verify with original challenge ===
             var exception = Record.Exception(() =>
@@ -122,7 +122,7 @@ namespace Quantropic.Security.Tests.Srp.Integration
         public void FullSrpFlow_MultipleSequentialAuthentications_Succeeds()
         {
             // === Registration ===
-            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestPassword, _salt);
+            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestLogin, TestPassword, _salt);
             var verifierBase64 = _client.GenerateSrpVerifier(authHash);
             var storedVerifier = Convert.FromBase64String(verifierBase64);
             var saltBase64 = Convert.ToBase64String(_salt).Replace('+', '-').Replace('/', '_');
@@ -134,7 +134,7 @@ namespace Quantropic.Security.Tests.Srp.Integration
                 var challenge = _server.GetSrpChallenge(TestLogin, storedVerifier);
                 
                 // Client proof
-                var (A, M1, S) = _client.GenerateSrpProof(TestPassword, saltBase64, challenge.PublicKeyB);
+                var (A, M1, S) = _client.GenerateSrpProof(TestLogin, TestPassword, saltBase64, challenge.PublicKeyB);
                 
                 // Server verification
                 var M2 = _server.VerifySrpProof(challenge, A, M1);
@@ -150,14 +150,14 @@ namespace Quantropic.Security.Tests.Srp.Integration
         public void FullSrpFlow_SessionKeyUsableForEncryption()
         {
             // === Full SRP flow to get session key ===
-            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestPassword, _salt);
+            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestLogin, TestPassword, _salt);
             var verifierBase64 = _client.GenerateSrpVerifier(authHash);
             var storedVerifier = Convert.FromBase64String(verifierBase64);
             
             var challenge = _server.GetSrpChallenge(TestLogin, storedVerifier);
             var saltBase64 = Convert.ToBase64String(_salt).Replace('+', '-').Replace('/', '_');
             
-            var (A, M1, S) = _client.GenerateSrpProof(TestPassword, saltBase64, challenge.PublicKeyB);
+            var (A, M1, S) = _client.GenerateSrpProof(TestLogin, TestPassword, saltBase64, challenge.PublicKeyB);
             var M2 = _server.VerifySrpProof(challenge, A, M1);
             var authenticated = _client.VerifyServerM2(A, M1, S, M2);
             
@@ -183,7 +183,7 @@ namespace Quantropic.Security.Tests.Srp.Integration
         public async Task FullSrpFlow_ConcurrentAuthentications_DoesNotInterfere()
         {
             // === Registration ===
-            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestPassword, _salt);
+            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestLogin, TestPassword, _salt);
             var verifierBase64 = _client.GenerateSrpVerifier(authHash);
             var storedVerifier = Convert.FromBase64String(verifierBase64);
             var saltBase64 = Convert.ToBase64String(_salt).Replace('+', '-').Replace('/', '_');
@@ -195,7 +195,7 @@ namespace Quantropic.Security.Tests.Srp.Integration
                 tasks[i] = Task.Run(() =>
                 {
                     var challenge = _server.GetSrpChallenge(TestLogin, storedVerifier);
-                    var (A, M1, S) = _client.GenerateSrpProof(TestPassword, saltBase64, challenge.PublicKeyB);
+                    var (A, M1, S) = _client.GenerateSrpProof(TestLogin, TestPassword, saltBase64, challenge.PublicKeyB);
                     var M2 = _server.VerifySrpProof(challenge, A, M1);
                     return _client.VerifyServerM2(A, M1, S, M2);
                 });

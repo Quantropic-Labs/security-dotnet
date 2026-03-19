@@ -14,25 +14,25 @@ namespace Quantropic.Security.Cryptography
         /// <summary>
         /// Derives keys from password using default options.
         /// </summary>
-        public (byte[] Kek, string AuthHash) DeriveKeysFromPassword(string password, byte[] salt) => DeriveKeysFromPassword(password, salt, pbkdf2Iterations: null);
+        public (byte[] Kek, string AuthHash) DeriveKeysFromPassword(string login, string password, byte[] salt) => DeriveKeysFromPassword(login, password, salt, pbkdf2Iterations: null);
 
         /// <summary>
         /// Derives keys from password with custom iterations.
         /// </summary>
-        public (byte[] Kek, string AuthHash) DeriveKeysFromPassword(string password, byte[] salt, int? pbkdf2Iterations = null)
+        public (byte[] Kek, string AuthHash) DeriveKeysFromPassword(string login, string password, byte[] salt, int? pbkdf2Iterations = null)
         {
             var options = new CryptoOptions();
 
             if (pbkdf2Iterations.HasValue)
                 options.Pbkdf2Iterations = pbkdf2Iterations.Value;
 
-            return DeriveKeysFromPassword(password, salt, options);
+            return DeriveKeysFromPassword(login, password, salt, options);
         }
 
         /// <summary>
         /// Derives keys from password with full configuration.
         /// </summary>
-        public (byte[] Kek, string AuthHash) DeriveKeysFromPassword(string password, byte[] salt, CryptoOptions? options = null)
+        public (byte[] Kek, string AuthHash) DeriveKeysFromPassword(string login, string password, byte[] salt, CryptoOptions? options = null)
         {
             if (string.IsNullOrWhiteSpace(password))
                 throw new ArgumentException("Password cannot be null or empty.", nameof(password));
@@ -43,11 +43,13 @@ namespace Quantropic.Security.Cryptography
             var opts = options ?? CryptoOptions.Default;
             opts.Validate();
             
+            string normalizedLogin = login.Trim().ToLowerInvariant();
+            string combinedPassword = $"{normalizedLogin}:{password}";
             byte[] masterKey = [];
 
             try
             {
-                masterKey = Rfc2898DeriveBytes.Pbkdf2(password, salt, opts.Pbkdf2Iterations, HashAlgorithmName.SHA256, SecurityConstants.KeySizeBytes);
+                masterKey = Rfc2898DeriveBytes.Pbkdf2(combinedPassword, salt, opts.Pbkdf2Iterations, HashAlgorithmName.SHA256, SecurityConstants.KeySizeBytes);
                 byte[] emptySalt = []; 
                 byte[] kek = HKDF.DeriveKey(HashAlgorithmName.SHA256, masterKey, SecurityConstants.KeySizeBytes, emptySalt, Encoding.UTF8.GetBytes("AES-GCM-KEK-v1"));
                 byte[] authBytes = HKDF.DeriveKey(HashAlgorithmName.SHA256, masterKey, SecurityConstants.KeySizeBytes, emptySalt, Encoding.UTF8.GetBytes("SERVER-AUTH-HASH-v1"));

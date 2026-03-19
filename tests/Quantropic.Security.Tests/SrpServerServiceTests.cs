@@ -26,9 +26,9 @@ namespace Quantropic.Security.Tests.Srp.Server
 
         #region Helper Methods
 
-        private byte[] GenerateVerifierBytes(string password, byte[] salt)
+        private byte[] GenerateVerifierBytes(string login, string password, byte[] salt)
         {
-            var (_, authHash) = _kdf.DeriveKeysFromPassword(password, salt);
+            var (_, authHash) = _kdf.DeriveKeysFromPassword(login, password, salt);
             var authHashBytes = Convert.FromBase64String(authHash);
             var x = new BigInteger(authHashBytes, isBigEndian: true, isUnsigned: true);
             var v = BigInteger.ModPow(SecurityConstants.g, x, SecurityConstants.N);
@@ -51,12 +51,12 @@ namespace Quantropic.Security.Tests.Srp.Server
             );
         }
 
-        private (string A, string M1, string S) GenerateValidClientProof(string password, byte[] salt, BigInteger B)
+        private (string A, string M1, string S) GenerateValidClientProof(string login, string password, byte[] salt, BigInteger B)
         {
             var client = new Quantropic.Security.Srp.Client.SrpClientService();
             var saltBase64 = Convert.ToBase64String(salt).Replace('+', '-').Replace('/', '_');
             var B_base64 = Convert.ToBase64String(SrpEncoding.ToModulusBytes(B));
-            return client.GenerateSrpProof(password, saltBase64, B_base64);
+            return client.GenerateSrpProof(login, password, saltBase64, B_base64);
         }
 
         #endregion
@@ -67,7 +67,7 @@ namespace Quantropic.Security.Tests.Srp.Server
         public void GetSrpChallenge_ValidVerifier_ReturnsValidSession()
         {
             // Arrange
-            var verifierBytes = GenerateVerifierBytes(TestPassword, _testSalt);
+            var verifierBytes = GenerateVerifierBytes(TestLogin, TestPassword, _testSalt);
 
             // Act
             var session = _server.GetSrpChallenge(TestLogin, verifierBytes);
@@ -92,7 +92,7 @@ namespace Quantropic.Security.Tests.Srp.Server
         public void GetSrpChallenge_DifferentCalls_ProducesDifferentB()
         {
             // Arrange
-            var verifierBytes = GenerateVerifierBytes(TestPassword, _testSalt);
+            var verifierBytes = GenerateVerifierBytes(TestLogin, TestPassword, _testSalt);
 
             // Act
             var session1 = _server.GetSrpChallenge(TestLogin, verifierBytes);
@@ -137,9 +137,9 @@ namespace Quantropic.Security.Tests.Srp.Server
         public void VerifySrpProof_ValidClientProof_ReturnsValidM2()
         {
             // Arrange: Full setup
-            var verifierBytes = GenerateVerifierBytes(TestPassword, _testSalt);
+            var verifierBytes = GenerateVerifierBytes(TestLogin, TestPassword, _testSalt);
             var session = CreateValidSession(verifierBytes, out _, out var B);
-            var (A, M1, S) = GenerateValidClientProof(TestPassword, _testSalt, B);
+            var (A, M1, S) = GenerateValidClientProof(TestLogin, TestPassword, _testSalt, B);
 
             // Act
             var M2 = _server.VerifySrpProof(session, A, M1);
@@ -157,12 +157,12 @@ namespace Quantropic.Security.Tests.Srp.Server
             // This tests that server computation is deterministic given inputs
             
             // Arrange
-            var verifierBytes = GenerateVerifierBytes(TestPassword, _testSalt);
+            var verifierBytes = GenerateVerifierBytes(TestLogin, TestPassword, _testSalt);
             var session = CreateValidSession(verifierBytes, out _, out var B);
-            var (A1, M1_1, S1) = GenerateValidClientProof(TestPassword, _testSalt, B);
+            var (A1, M1_1, S1) = GenerateValidClientProof(TestLogin, TestPassword, _testSalt, B);
             
             // Generate second proof (will have different A due to random 'a')
-            var (A2, M1_2, S2) = GenerateValidClientProof(TestPassword, _testSalt, B);
+            var (A2, M1_2, S2) = GenerateValidClientProof(TestLogin, TestPassword, _testSalt, B);
 
             // Act
             var M2_1 = _server.VerifySrpProof(session, A1, M1_1);
@@ -205,7 +205,7 @@ namespace Quantropic.Security.Tests.Srp.Server
         [Fact]
         public void VerifySrpProof_AEqualsZero_ThrowsSrpVerificationException()
         {
-            var verifierBytes = GenerateVerifierBytes(TestPassword, _testSalt);
+            var verifierBytes = GenerateVerifierBytes(TestLogin, TestPassword, _testSalt);
             var session = CreateValidSession(verifierBytes, out _, out _);
             
             var zeroA = Convert.ToBase64String(new byte[SecurityConstants.ModulusSize]);
@@ -217,7 +217,7 @@ namespace Quantropic.Security.Tests.Srp.Server
         [Fact]
         public void VerifySrpProof_AOutOfRange_ThrowsSrpVerificationException()
         {
-            var verifierBytes = GenerateVerifierBytes(TestPassword, _testSalt);
+            var verifierBytes = GenerateVerifierBytes(TestLogin, TestPassword, _testSalt);
             var session = CreateValidSession(verifierBytes, out _, out _);
             
             // A >= N is invalid
@@ -231,11 +231,11 @@ namespace Quantropic.Security.Tests.Srp.Server
         public void VerifySrpProof_WrongPassword_ThrowsSrpVerificationException()
         {
             // Arrange: Server expects password "correct", client uses "wrong"
-            var verifierBytes = GenerateVerifierBytes("correct_password", _testSalt);
+            var verifierBytes = GenerateVerifierBytes(TestLogin, "correct_password", _testSalt);
             var session = CreateValidSession(verifierBytes, out _, out var B);
             
             // Client proves with wrong password
-            var (A, M1, _) = GenerateValidClientProof("wrong_password", _testSalt, B);
+            var (A, M1, _) = GenerateValidClientProof(TestLogin, "wrong_password", _testSalt, B);
 
             Assert.Throws<SrpVerificationException>(() => _server.VerifySrpProof(session, A, M1));
         }
@@ -243,9 +243,9 @@ namespace Quantropic.Security.Tests.Srp.Server
         [Fact]
         public void VerifySrpProof_TamperedM1_ThrowsSrpVerificationException()
         {
-            var verifierBytes = GenerateVerifierBytes(TestPassword, _testSalt);
+            var verifierBytes = GenerateVerifierBytes(TestLogin, TestPassword, _testSalt);
             var session = CreateValidSession(verifierBytes, out _, out var B);
-            var (A, M1, _) = GenerateValidClientProof(TestPassword, _testSalt, B);
+            var (A, M1, _) = GenerateValidClientProof(TestLogin, TestPassword, _testSalt, B);
             
             // Tamper with M1
             var m1Bytes = Convert.FromBase64String(M1);
@@ -261,9 +261,9 @@ namespace Quantropic.Security.Tests.Srp.Server
             // This test documents that FixedTimeEquals is used
             // Actual timing attack testing requires statistical analysis
 
-            var verifierBytes = GenerateVerifierBytes(TestPassword, _testSalt);
+            var verifierBytes = GenerateVerifierBytes(TestLogin, TestPassword, _testSalt);
             var session = CreateValidSession(verifierBytes, out _, out var B);
-            var (A, M1, _) = GenerateValidClientProof(TestPassword, _testSalt, B);
+            var (A, M1, _) = GenerateValidClientProof(TestLogin, TestPassword, _testSalt, B);
             
             // Create M1 with one-bit difference at various positions
             var m1Bytes = Convert.FromBase64String(M1);
@@ -310,7 +310,7 @@ namespace Quantropic.Security.Tests.Srp.Server
         [Fact]
         public void VerifySrpProof_InvalidBase64A_ThrowsFormatException()
         {
-            var verifierBytes = GenerateVerifierBytes(TestPassword, _testSalt);
+            var verifierBytes = GenerateVerifierBytes(TestLogin, TestPassword, _testSalt);
             var session = CreateValidSession(verifierBytes, out _, out _);
 
             Assert.Throws<FormatException>(() => _server.VerifySrpProof(session, "!!!invalid!!!", "M1"));
@@ -319,7 +319,7 @@ namespace Quantropic.Security.Tests.Srp.Server
         [Fact]
         public void VerifySrpProof_InvalidBase64M1_ThrowsFormatException()
         {
-            var verifierBytes = GenerateVerifierBytes(TestPassword, _testSalt);
+            var verifierBytes = GenerateVerifierBytes(TestLogin, TestPassword, _testSalt);
             var session = CreateValidSession(verifierBytes, out _, out _);
             var validA = Convert.ToBase64String(SrpEncoding.ToModulusBytes(BigInteger.One));
 
@@ -340,7 +340,7 @@ namespace Quantropic.Security.Tests.Srp.Server
             var small = BigInteger.One;
             
             // Act: Generate challenge and verify B has correct length
-            var verifierBytes = GenerateVerifierBytes(TestPassword, _testSalt);
+            var verifierBytes = GenerateVerifierBytes(TestLogin, TestPassword, _testSalt);
             var session = _server.GetSrpChallenge(TestLogin, verifierBytes);
             var BBytes = Convert.FromBase64String(session.PublicKeyB);
 
@@ -351,9 +351,9 @@ namespace Quantropic.Security.Tests.Srp.Server
         public void CalculateSrpHash_MultipleValues_ProducesConsistentOutput()
         {
             // Test via integration: u parameter computation
-            var verifierBytes = GenerateVerifierBytes(TestPassword, _testSalt);
+            var verifierBytes = GenerateVerifierBytes(TestLogin, TestPassword, _testSalt);
             var session = CreateValidSession(verifierBytes, out _, out var B);
-            var (A1, M1, _) = GenerateValidClientProof(TestPassword, _testSalt, B);
+            var (A1, M1, _) = GenerateValidClientProof(TestLogin, TestPassword, _testSalt, B);
             var A_big = BigIntegerUtilities.FromBase64(A1);
             
             // Act: Call twice with same inputs
@@ -373,9 +373,9 @@ namespace Quantropic.Security.Tests.Srp.Server
         public void VerifySrpProof_VeryLargeLogin_HandlesCorrectly()
         {
             var longLogin = new string('u', 1000) + "@example.com";
-            var verifierBytes = GenerateVerifierBytes(TestPassword, _testSalt);
+            var verifierBytes = GenerateVerifierBytes(TestLogin, TestPassword, _testSalt);
             var session = CreateValidSession(verifierBytes, out _, out var B);
-            var (A, M1, _) = GenerateValidClientProof(TestPassword, _testSalt, B);
+            var (A, M1, _) = GenerateValidClientProof(TestLogin, TestPassword, _testSalt, B);
 
             // Act: Login is not used in crypto, just stored in session
             var M2 = _server.VerifySrpProof(session, A, M1);
