@@ -15,6 +15,7 @@ namespace Quantropic.Security.Srp.Client
         /// <summary>
         /// Generates the SRP client proof values required for authentication.
         /// </summary>
+        /// <param name="login">User Login.</param>
         /// <param name="password">The user's plain-text password.</param>
         /// <param name="saltBase64">The salt provided by the server, encoded in URL-safe Base64.</param>
         /// <param name="B_base64">The server's public ephemeral value (B), encoded in URL-safe Base64.</param>
@@ -26,14 +27,14 @@ namespace Quantropic.Security.Srp.Client
         /// <item><description><c>S</c>: The shared session key, Base64-encoded.</description></item>
         /// </list>
         /// </returns>
-        public (string A, string M1, string S) GenerateSrpProof(string password, string saltBase64, string B_base64)    
+        public (string A, string M1, string S) GenerateSrpProof(string login, string password, string saltBase64, string B_base64)    
         {
             KeyDerivationService keyDerivationService = new();
             CryptoService cryptoService = new();
 
             string cleanSalt = saltBase64.Replace('-', '+').Replace('_', '/');
             byte[] salt = Convert.FromBase64String(cleanSalt);
-            var (_, AuthHash) = keyDerivationService.DeriveKeysFromPassword(password, salt);
+            var (_, AuthHash) = keyDerivationService.DeriveKeysFromPassword(login, password, salt);
             byte[] authHashBytes = Convert.FromBase64String(AuthHash);
             BigInteger x = new(authHashBytes, isBigEndian: true, isUnsigned: true);
 
