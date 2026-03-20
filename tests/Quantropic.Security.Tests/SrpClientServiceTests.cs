@@ -11,6 +11,7 @@ namespace Quantropic.Security.Tests.Srp.Client
     {
         private readonly SrpClientService _client;
         private readonly KeyDerivationService _kdf;
+        private const string TestLogin = "TestLogin";
         private const string TestPassword = "MyStr0ng!P@ssw0rd2024";
         private readonly byte[] _testSalt;
         private readonly string _testSaltBase64;
@@ -25,9 +26,9 @@ namespace Quantropic.Security.Tests.Srp.Client
 
         #region Helper Methods
 
-        private (string AuthHash, byte[] AuthHashBytes, BigInteger X) DeriveAuthComponents(string password, byte[] salt)
+        private (string AuthHash, byte[] AuthHashBytes, BigInteger X) DeriveAuthComponents(string login, string password, byte[] salt)
         {
-            var (_, authHash) = _kdf.DeriveKeysFromPassword(password, salt);
+            var (_, authHash) = _kdf.DeriveKeysFromPassword(login, password, salt);
             var authHashBytes = Convert.FromBase64String(authHash);
             var x = new BigInteger(authHashBytes, isBigEndian: true, isUnsigned: true);
             return (authHash, authHashBytes, x);
@@ -48,14 +49,14 @@ namespace Quantropic.Security.Tests.Srp.Client
         public void GenerateSrpProof_ValidInputs_ReturnsValidBase64Strings()
         {
             // Arrange
-            var (_, authHashBytes, x) = DeriveAuthComponents(TestPassword, _testSalt);
+            var (_, authHashBytes, x) = DeriveAuthComponents(TestLogin, TestPassword, _testSalt);
             var v = BigInteger.ModPow(SecurityConstants.g, x, SecurityConstants.N);
             var bBytes = RandomNumberGenerator.GetBytes(32);
             var B = GenerateValidB(v, bBytes);
             var B_base64 = Convert.ToBase64String(SrpEncoding.ToModulusBytes(B));
 
             // Act
-            var (A, M1, S) = _client.GenerateSrpProof(TestPassword, _testSaltBase64, B_base64);
+            var (A, M1, S) = _client.GenerateSrpProof(TestLogin, TestPassword, _testSaltBase64, B_base64);
 
             // Assert
             Assert.NotNull(A);
@@ -78,14 +79,14 @@ namespace Quantropic.Security.Tests.Srp.Client
         {
             // Arrange
             var bBytes = RandomNumberGenerator.GetBytes(32);
-            var (_, authHashBytes, x) = DeriveAuthComponents(TestPassword, _testSalt);
+            var (_, authHashBytes, x) = DeriveAuthComponents(TestLogin, TestPassword, _testSalt);
             var v = BigInteger.ModPow(SecurityConstants.g, x, SecurityConstants.N);
             var B = GenerateValidB(v, bBytes);
             var B_base64 = Convert.ToBase64String(SrpEncoding.ToModulusBytes(B));
 
             // Act
-            var (A1, M1_1, S1) = _client.GenerateSrpProof(TestPassword, _testSaltBase64, B_base64);
-            var (A2, M1_2, S2) = _client.GenerateSrpProof(TestPassword, _testSaltBase64, B_base64);
+            var (A1, M1_1, S1) = _client.GenerateSrpProof(TestLogin, TestPassword, _testSaltBase64, B_base64);
+            var (A2, M1_2, S2) = _client.GenerateSrpProof(TestLogin, TestPassword, _testSaltBase64, B_base64);
 
             // Assert
             // A should differ (random 'a' each time)
@@ -103,7 +104,7 @@ namespace Quantropic.Security.Tests.Srp.Client
             // Arrange: Salt with + and / characters that need URL-safe conversion
             var saltWithSpecialChars = new byte[] { 0xfb, 0xff, 0xfe, 0xfd }; // Will produce + and / in Base64
             var saltBase64Url = Convert.ToBase64String(saltWithSpecialChars).Replace('+', '-').Replace('/', '_');
-            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestPassword, saltWithSpecialChars);
+            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestLogin, TestPassword, saltWithSpecialChars);
             var authHashBytes = Convert.FromBase64String(authHash);
             var x = new BigInteger(authHashBytes, isBigEndian: true, isUnsigned: true);
             var v = BigInteger.ModPow(SecurityConstants.g, x, SecurityConstants.N);
@@ -113,7 +114,7 @@ namespace Quantropic.Security.Tests.Srp.Client
             var B_base64 = Convert.ToBase64String(SrpEncoding.ToModulusBytes(B));
 
             // Act
-            var (A, M1, S) = _client.GenerateSrpProof(TestPassword, saltBase64Url, B_base64);
+            var (A, M1, S) = _client.GenerateSrpProof(TestLogin, TestPassword, saltBase64Url, B_base64);
 
             // Assert
             Assert.NotNull(A);
@@ -137,7 +138,7 @@ namespace Quantropic.Security.Tests.Srp.Client
 
             // Act & Assert
             Assert.Throws<ArgumentException>(() => 
-                _client.GenerateSrpProof(invalidPassword!, _testSaltBase64, B_base64));
+                _client.GenerateSrpProof(TestLogin, invalidPassword!, _testSaltBase64, B_base64));
         }
 
         // [Theory]
@@ -186,7 +187,7 @@ namespace Quantropic.Security.Tests.Srp.Client
         public void GenerateSrpVerifier_ValidAuthHash_ReturnsValidBase64()
         {
             // Arrange
-            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestPassword, _testSalt);
+            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestLogin, TestPassword, _testSalt);
 
             // Act
             var verifier = _client.GenerateSrpVerifier(authHash);
@@ -201,7 +202,7 @@ namespace Quantropic.Security.Tests.Srp.Client
         public void GenerateSrpVerifier_SameAuthHash_ProducesSameVerifier()
         {
             // Arrange
-            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestPassword, _testSalt);
+            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestLogin, TestPassword, _testSalt);
 
             // Act
             var v1 = _client.GenerateSrpVerifier(authHash);
@@ -215,8 +216,8 @@ namespace Quantropic.Security.Tests.Srp.Client
         public void GenerateSrpVerifier_DifferentPasswords_ProducesDifferentVerifiers()
         {
             // Arrange
-            var (_, authHash1) = _kdf.DeriveKeysFromPassword("password1", _testSalt);
-            var (_, authHash2) = _kdf.DeriveKeysFromPassword("password2", _testSalt);
+            var (_, authHash1) = _kdf.DeriveKeysFromPassword(TestLogin, "password1", _testSalt);
+            var (_, authHash2) = _kdf.DeriveKeysFromPassword(TestLogin, "password2", _testSalt);
 
             // Act
             var v1 = _client.GenerateSrpVerifier(authHash1);
@@ -244,7 +245,7 @@ namespace Quantropic.Security.Tests.Srp.Client
         public void VerifyServerM2_ValidM2_ReturnsTrue()
         {
             // Arrange: Full SRP flow to get valid M2
-            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestPassword, _testSalt);
+            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestLogin, TestPassword, _testSalt);
             var authHashBytes = Convert.FromBase64String(authHash);
             var x = new BigInteger(authHashBytes, isBigEndian: true, isUnsigned: true);
             var v = BigInteger.ModPow(SecurityConstants.g, x, SecurityConstants.N);
@@ -253,7 +254,7 @@ namespace Quantropic.Security.Tests.Srp.Client
             var B = GenerateValidB(v, bBytes);
             var B_base64 = Convert.ToBase64String(SrpEncoding.ToModulusBytes(B));
             
-            var (A, M1, S) = _client.GenerateSrpProof(TestPassword, _testSaltBase64, B_base64);
+            var (A, M1, S) = _client.GenerateSrpProof(TestLogin, TestPassword, _testSaltBase64, B_base64);
             
             // Compute expected M2 manually (same as server would)
             var A_big = BigIntegerUtilities.FromBase64(A);
@@ -273,7 +274,7 @@ namespace Quantropic.Security.Tests.Srp.Client
         public void VerifyServerM2_InvalidM2_ReturnsFalse()
         {
             // Arrange
-            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestPassword, _testSalt);
+            var (_, authHash) = _kdf.DeriveKeysFromPassword(TestLogin, TestPassword, _testSalt);
             var authHashBytes = Convert.FromBase64String(authHash);
             var x = new BigInteger(authHashBytes, isBigEndian: true, isUnsigned: true);
             var v = BigInteger.ModPow(SecurityConstants.g, x, SecurityConstants.N);
@@ -282,7 +283,7 @@ namespace Quantropic.Security.Tests.Srp.Client
             var B = GenerateValidB(v, bBytes);
             var B_base64 = Convert.ToBase64String(SrpEncoding.ToModulusBytes(B));
             
-            var (A, M1, S) = _client.GenerateSrpProof(TestPassword, _testSaltBase64, B_base64);
+            var (A, M1, S) = _client.GenerateSrpProof(TestLogin, TestPassword, _testSaltBase64, B_base64);
             
             // Create invalid M2 (flip one bit)
             var validM2Bytes = SrpEncoding.ToHashBytes(SrpEncoding.ComputeM2(
@@ -324,13 +325,13 @@ namespace Quantropic.Security.Tests.Srp.Client
             // Arrange
             var largePassword = new string('P', 1000);
             var bBytes = RandomNumberGenerator.GetBytes(32);
-            var (_, authHashBytes, x) = DeriveAuthComponents(largePassword, _testSalt);
+            var (_, authHashBytes, x) = DeriveAuthComponents(TestLogin, largePassword, _testSalt);
             var v = BigInteger.ModPow(SecurityConstants.g, x, SecurityConstants.N);
             var B = GenerateValidB(v, bBytes);
             var B_base64 = Convert.ToBase64String(SrpEncoding.ToModulusBytes(B));
 
             // Act
-            var (A, M1, S) = _client.GenerateSrpProof(largePassword, _testSaltBase64, B_base64);
+            var (A, M1, S) = _client.GenerateSrpProof(TestLogin, largePassword, _testSaltBase64, B_base64);
 
             // Assert
             Assert.NotNull(A);
@@ -344,13 +345,13 @@ namespace Quantropic.Security.Tests.Srp.Client
             // Arrange
             var unicodePassword = "Пароль🔐密码🗝️";
             var bBytes = RandomNumberGenerator.GetBytes(32);
-            var (_, authHashBytes, x) = DeriveAuthComponents(unicodePassword, _testSalt);
+            var (_, authHashBytes, x) = DeriveAuthComponents(TestLogin, unicodePassword, _testSalt);
             var v = BigInteger.ModPow(SecurityConstants.g, x, SecurityConstants.N);
             var B = GenerateValidB(v, bBytes);
             var B_base64 = Convert.ToBase64String(SrpEncoding.ToModulusBytes(B));
 
             // Act
-            var (A, M1, S) = _client.GenerateSrpProof(unicodePassword, _testSaltBase64, B_base64);
+            var (A, M1, S) = _client.GenerateSrpProof(TestLogin, unicodePassword, _testSaltBase64, B_base64);
 
             // Assert
             Assert.NotNull(A);

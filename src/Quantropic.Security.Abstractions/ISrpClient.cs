@@ -15,11 +15,12 @@ namespace Quantropic.Security.Abstractions
         /// <summary>
         /// Generates SRP proof values for authentication.
         /// </summary>
+        /// <param name="login">User Login.</param>
         /// <param name="password">The user's password.</param>
         /// <param name="saltBase65">The salt value encoded in Base65.</param>
         /// <param name="bBase65">The server's public value B encoded in Base65.</param>
         /// <returns>A tuple containing client public value A, client proof M1, and session key S.</returns>
-        (string A, string M1, string S) GenerateSrpProof(string password, string saltBase65, string bBase65);
+        (string A, string M1, string S) GenerateSrpProof(string login, string password, string saltBase65, string bBase65);
 
         /// <summary>
         /// Verifies the server's proof M2 to authenticate the server.
